@@ -1,0 +1,368 @@
+<div class="home-page">
+
+  <!-- ── Hero Banner ────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-inner">
+
+      <div class="hero-badge">
+        <mat-icon>auto_awesome</mat-icon>
+        <span>Powered by AWS Bedrock AI · LangGraph Agents</span>
+      </div>
+
+      <h1 class="hero-title">
+        Meeting <span class="gradient-text">Intelligence</span><br>Platform
+      </h1>
+
+      <p class="hero-subtitle">
+        Transform recordings, YouTube videos &amp; text into AI-powered insights —
+        transcripts, summaries, action items and detailed analysis in seconds.
+      </p>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-value">8</span>
+          <span class="stat-label">AI Agents</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">4</span>
+          <span class="stat-label">Input Types</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">2</span>
+          <span class="stat-label">Analysis Modes</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">6+</span>
+          <span class="stat-label">Export Formats</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Form Card ──────────────────────────────────────── -->
+  <div class="form-section">
+    <mat-card class="form-card">
+      <mat-card-content>
+
+        <!-- Input Type Selector -->
+        <p class="section-label">
+          <mat-icon>touch_app</mat-icon>
+          Choose your input type
+        </p>
+
+        <div class="input-type-grid">
+          @for (card of inputTypeCards; track card.type) {
+            <div
+              class="input-type-card"
+              [class.active]="inputType === card.type"
+              (click)="selectInputType(card.type)"
+            >
+              <mat-icon class="card-icon">{{ card.icon }}</mat-icon>
+              <span class="card-label">{{ card.label }}</span>
+              <span class="card-subtitle">{{ card.subtitle }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="form-divider"></div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+
+          @if (inputType === 'file' || inputType === 'text_file') {
+            <div
+              class="drop-zone"
+              [class.drag-over]="isDragOver"
+              [class.has-file]="selectedFile !== null"
+              (click)="triggerFileInput()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onFileDrop($event)"
+            >
+              <input
+                #fileInput
+                type="file"
+                class="hidden-input"
+                [accept]="getAcceptedFormats()"
+                (change)="onFileSelected($event)"
+              />
+
+              @if (!selectedFile) {
+                <div class="drop-icon-wrap">
+                  <mat-icon class="drop-icon">cloud_upload</mat-icon>
+                </div>
+                <p class="drop-text">Drag &amp; drop your file here or <span class="browse-link">browse</span></p>
+                <p class="drop-formats">{{ getAcceptedFormatsLabel() }}</p>
+              } @else {
+                <div class="drop-icon-wrap success">
+                  <mat-icon class="drop-icon success-icon">check_circle</mat-icon>
+                </div>
+                <p class="drop-text file-name">{{ selectedFile.name }}</p>
+                <p class="drop-formats">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB · ready to analyze</p>
+                <button
+                  mat-stroked-button
+                  class="remove-btn"
+                  (click)="$event.stopPropagation(); removeFile()"
+                >
+                  <mat-icon>close</mat-icon> Remove
+                </button>
+              }
+            </div>
+          }
+
+          @if (inputType === 'youtube') {
+            <div class="youtube-input-wrap">
+              <div class="youtube-hint">
+                <mat-icon>bolt</mat-icon>
+                <span>Captions fetched instantly — no download needed</span>
+              </div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>YouTube URL</mat-label>
+                <mat-icon matPrefix class="prefix-icon">play_circle</mat-icon>
+                <input
+                  matInput
+                  [(ngModel)]="youtubeUrl"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  type="url"
+                />
+                <mat-hint>Paste any YouTube video URL</mat-hint>
+              </mat-form-field>
+            </div>
+          }
+
+          @if (inputType === 'raw_text') {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Paste your meeting transcript or notes</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="rawText"
+                placeholder="Paste your meeting content here..."
+                rows="10"
+              ></textarea>
+              <mat-hint>Minimum 50 characters required</mat-hint>
+            </mat-form-field>
+          }
+        </div>
+
+        <!-- Output Mode Selector -->
+        @if (inputType !== 'youtube') {
+          <div class="form-divider"></div>
+
+          <div class="output-mode-section">
+            <p class="section-label">
+              <mat-icon>tune</mat-icon>
+              Select analysis mode
+            </p>
+            <div class="output-mode-options">
+              <label class="mode-option" [class.active]="outputMode === 'meeting_analysis'">
+                <input type="radio" name="outputMode" value="meeting_analysis" [(ngModel)]="outputMode" />
+                <div class="mode-icon-wrap">
+                  <mat-icon>groups</mat-icon>
+                </div>
+                <div class="mode-content">
+                  <span class="mode-title">Meeting Analysis</span>
+                  <span class="mode-desc">Action Items · Risks · MOM · Email Draft</span>
+                </div>
+                <mat-icon class="mode-check">check_circle</mat-icon>
+              </label>
+
+              <label class="mode-option" [class.active]="outputMode === 'content_analysis'">
+                <input type="radio" name="outputMode" value="content_analysis" [(ngModel)]="outputMode" />
+                <div class="mode-icon-wrap">
+                  <mat-icon>school</mat-icon>
+                </div>
+                <div class="mode-content">
+                  <span class="mode-title">Content Analysis</span>
+                  <span class="mode-desc">Summary · Explanation · Steps Detail</span>
+                </div>
+                <mat-icon class="mode-check">check_circle</mat-icon>
+              </label>
+            </div>
+          </div>
+        }
+
+        <!-- Error -->
+        @if (error) {
+          <div class="error-box">
+            <mat-icon class="error-icon">error_outline</mat-icon>
+            <span>{{ error }}</span>
+          </div>
+        }
+
+        <!-- Submit -->
+        <button
+          mat-raised-button
+          color="primary"
+          class="submit-btn"
+          [disabled]="isLoading"
+          (click)="submit()"
+        >
+          @if (isLoading) {
+            <mat-spinner diameter="20" class="btn-spinner"></mat-spinner>
+            <span>Submitting...</span>
+          } @else {
+            <mat-icon>rocket_launch</mat-icon>
+            <span>Analyze Now</span>
+          }
+        </button>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ── How it Works ───────────────────────────────────── -->
+  <div class="how-section">
+    <div class="how-inner">
+      <div class="section-heading">
+        <span class="section-eyebrow">Simple &amp; Fast</span>
+        <h2 class="section-title">How it works</h2>
+        <p class="section-desc">Three steps from upload to insight — powered by a LangGraph multi-agent pipeline running on AWS Bedrock.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-icon-wrap indigo">
+            <mat-icon>upload_file</mat-icon>
+          </div>
+          <h3 class="step-title">Upload your content</h3>
+          <p class="step-desc">Provide an audio/video file, paste a YouTube URL, upload a document, or type raw text.</p>
+        </div>
+
+        <div class="step-connector-h">
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-icon-wrap violet">
+            <mat-icon>account_tree</mat-icon>
+          </div>
+          <h3 class="step-title">AI pipeline runs</h3>
+          <p class="step-desc">Up to 8 specialised LangGraph agents process your content — transcription, summary, analysis and more.</p>
+        </div>
+
+        <div class="step-connector-h">
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-icon-wrap green">
+            <mat-icon>download_done</mat-icon>
+          </div>
+          <h3 class="step-title">Download results</h3>
+          <p class="step-desc">View interactive results and export to TXT, DOCX, PDF or Excel — all from one dashboard.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── What You Get ────────────────────────────────────── -->
+  <div class="outputs-section">
+    <div class="outputs-inner">
+      <div class="section-heading">
+        <span class="section-eyebrow">Output Formats</span>
+        <h2 class="section-title">What you'll get</h2>
+        <p class="section-desc">Choose the analysis mode that fits your content. Every result is downloadable in multiple formats.</p>
+      </div>
+
+      <div class="modes-compare">
+
+        <div class="mode-card">
+          <div class="mode-card-header indigo">
+            <div class="mode-card-icon">
+              <mat-icon>groups</mat-icon>
+            </div>
+            <div>
+              <h3 class="mode-card-title">Meeting Analysis</h3>
+              <p class="mode-card-sub">For recorded calls, standups &amp; project meetings</p>
+            </div>
+          </div>
+          <ul class="output-list">
+            <li class="output-item">
+              <mat-icon class="output-icon">mic</mat-icon>
+              <div><span class="output-name">Transcript</span><span class="output-formats">TXT · DOCX · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">summarize</mat-icon>
+              <div><span class="output-name">Meeting Summary</span><span class="output-formats">TXT · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">task_alt</mat-icon>
+              <div><span class="output-name">Action Items</span><span class="output-formats">Excel · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">warning_amber</mat-icon>
+              <div><span class="output-name">Risks &amp; Dependencies</span><span class="output-formats">Excel · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">description</mat-icon>
+              <div><span class="output-name">Minutes of Meeting</span><span class="output-formats">DOCX · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">email</mat-icon>
+              <div><span class="output-name">Follow-up Email Draft</span><span class="output-formats">TXT · Copy</span></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mode-card">
+          <div class="mode-card-header violet">
+            <div class="mode-card-icon">
+              <mat-icon>school</mat-icon>
+            </div>
+            <div>
+              <h3 class="mode-card-title">Content Analysis</h3>
+              <p class="mode-card-sub">For YouTube videos, lectures &amp; tutorials</p>
+            </div>
+          </div>
+          <ul class="output-list">
+            <li class="output-item">
+              <mat-icon class="output-icon">mic</mat-icon>
+              <div><span class="output-name">Transcript</span><span class="output-formats">TXT · DOCX · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">summarize</mat-icon>
+              <div><span class="output-name">Content Summary</span><span class="output-formats">TXT · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">school</mat-icon>
+              <div><span class="output-name">Detailed Explanation</span><span class="output-formats">TXT · PDF</span></div>
+            </li>
+            <li class="output-item">
+              <mat-icon class="output-icon">format_list_numbered</mat-icon>
+              <div><span class="output-name">Step-by-Step Breakdown</span><span class="output-formats">TXT · PDF</span></div>
+            </li>
+            <li class="output-item auto-badge">
+              <mat-icon class="output-icon">auto_awesome</mat-icon>
+              <div><span class="output-name">Auto-selected for YouTube</span><span class="output-formats">Captions fetched instantly</span></div>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tech Stack Footer ───────────────────────────────── -->
+  <div class="tech-footer">
+    <div class="tech-footer-inner">
+      <p class="tech-footer-label">Built with</p>
+      <div class="tech-stack-pills">
+        <span class="ts-pill"><mat-icon>cloud</mat-icon> AWS Bedrock</span>
+        <span class="ts-pill"><mat-icon>mic</mat-icon> AWS Transcribe</span>
+        <span class="ts-pill"><mat-icon>account_tree</mat-icon> LangGraph</span>
+        <span class="ts-pill"><mat-icon>bolt</mat-icon> FastAPI</span>
+        <span class="ts-pill"><mat-icon>change_history</mat-icon> Angular 19</span>
+        <span class="ts-pill"><mat-icon>storage</mat-icon> Amazon S3</span>
+        <span class="ts-pill"><mat-icon>smart_toy</mat-icon> Nova Pro</span>
+      </div>
+    </div>
+  </div>
+
+</div>

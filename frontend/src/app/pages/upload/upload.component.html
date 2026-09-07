@@ -1,0 +1,231 @@
+<div class="upload-page">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Upload Meeting</h1>
+    <p class="text-gray-500 text-sm mt-1">Upload audio/video, paste a YouTube URL, or paste raw transcript text</p>
+  </div>
+
+  <form [formGroup]="form">
+    <div class="upload-layout">
+      <!-- Left: Input Type Selection + Content -->
+      <div class="upload-main">
+        <!-- Step 1: Input Type -->
+        <mat-card class="mb-4">
+          <mat-card-header>
+            <mat-card-title class="step-title">
+              <span class="step-num">1</span>
+              Choose Input Type
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="input-type-buttons">
+              <button type="button"
+                class="type-btn"
+                [class.type-btn-active]="inputType === 'file'"
+                (click)="selectInputType('file')"
+              >
+                <mat-icon>upload_file</mat-icon>
+                <span>File Upload</span>
+                <small>MP3, MP4, WAV</small>
+              </button>
+              <button type="button"
+                class="type-btn"
+                [class.type-btn-active]="inputType === 'youtube'"
+                (click)="selectInputType('youtube')"
+              >
+                <mat-icon>smart_display</mat-icon>
+                <span>YouTube URL</span>
+                <small>Paste video link</small>
+              </button>
+              <button type="button"
+                class="type-btn"
+                [class.type-btn-active]="inputType === 'text'"
+                (click)="selectInputType('text')"
+              >
+                <mat-icon>article</mat-icon>
+                <span>Paste Text</span>
+                <small>Raw transcript</small>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Step 2: Input Content -->
+        <mat-card class="mb-4">
+          <mat-card-header>
+            <mat-card-title class="step-title">
+              <span class="step-num">2</span>
+              @if (inputType === 'file') { Upload File }
+              @else if (inputType === 'youtube') { YouTube URL }
+              @else { Paste Transcript }
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+
+            <!-- File Upload -->
+            @if (inputType === 'file') {
+              @if (!selectedFile) {
+                <div
+                  class="drop-zone"
+                  [class.drag-over]="isDragOver"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave($event)"
+                  (drop)="onDrop($event)"
+                  (click)="fileInput.click()"
+                >
+                  <mat-icon class="drop-icon">cloud_upload</mat-icon>
+                  <p class="drop-title">Drag and drop your file here</p>
+                  <p class="drop-sub">or click to browse</p>
+                  <p class="drop-hint">Supports: MP3, MP4, WAV, M4A (max 500MB)</p>
+                  <input #fileInput type="file" accept=".mp3,.mp4,.wav,.m4a,.mov" hidden (change)="onFileSelected($event)" />
+                </div>
+              } @else {
+                <div class="file-selected">
+                  <mat-icon class="file-icon">audio_file</mat-icon>
+                  <div class="file-info">
+                    <p class="file-name">{{ selectedFile.name }}</p>
+                    <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+                  </div>
+                  <button type="button" mat-icon-button color="warn" (click)="selectedFile = null">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+            }
+
+            <!-- YouTube URL -->
+            @if (inputType === 'youtube') {
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>YouTube URL</mat-label>
+                <mat-icon matPrefix>link</mat-icon>
+                <input
+                  matInput
+                  formControlName="youtubeUrl"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+                @if (form.get('youtubeUrl')?.hasError('required') && form.get('youtubeUrl')?.touched) {
+                  <mat-error>YouTube URL is required</mat-error>
+                }
+                @if (form.get('youtubeUrl')?.hasError('pattern')) {
+                  <mat-error>Please enter a valid YouTube URL</mat-error>
+                }
+              </mat-form-field>
+              <p class="text-gray-400 text-xs mt-1">
+                <mat-icon style="font-size: 14px; vertical-align: middle;">info</mat-icon>
+                Supports youtube.com and youtu.be links
+              </p>
+            }
+
+            <!-- Paste Text -->
+            @if (inputType === 'text') {
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Meeting Transcript</mat-label>
+                <textarea
+                  matInput
+                  formControlName="pastedText"
+                  rows="12"
+                  placeholder="Paste your meeting transcript here... (minimum 50 characters)"
+                ></textarea>
+                <mat-hint align="end">{{ form.get('pastedText')?.value?.length || 0 }} chars</mat-hint>
+                @if (form.get('pastedText')?.hasError('required') && form.get('pastedText')?.touched) {
+                  <mat-error>Transcript text is required</mat-error>
+                }
+                @if (form.get('pastedText')?.hasError('minlength')) {
+                  <mat-error>Please enter at least 50 characters</mat-error>
+                }
+              </mat-form-field>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Right: Meeting Details -->
+      <div class="upload-sidebar">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="step-title">
+              <span class="step-num">3</span>
+              Meeting Details
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="flex flex-col gap-4">
+
+              <!-- Title -->
+              <mat-form-field appearance="outline">
+                <mat-label>Meeting Title</mat-label>
+                <input matInput formControlName="title" placeholder="e.g. Q4 Sprint Planning" />
+                <mat-icon matSuffix>title</mat-icon>
+                @if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
+                  <mat-error>Title is required</mat-error>
+                }
+                @if (form.get('title')?.hasError('minlength')) {
+                  <mat-error>Title must be at least 3 characters</mat-error>
+                }
+              </mat-form-field>
+
+              <!-- Meeting Type -->
+              <mat-form-field appearance="outline">
+                <mat-label>Meeting Type</mat-label>
+                <mat-select formControlName="meetingType">
+                  @for (type of meetingTypes; track type) {
+                    <mat-option [value]="type">{{ type }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matSuffix>category</mat-icon>
+              </mat-form-field>
+
+              <!-- Created By -->
+              <mat-form-field appearance="outline">
+                <mat-label>Your Name</mat-label>
+                <input matInput formControlName="createdBy" placeholder="e.g. Alice Johnson" />
+                <mat-icon matSuffix>person</mat-icon>
+                @if (form.get('createdBy')?.hasError('required') && form.get('createdBy')?.touched) {
+                  <mat-error>Name is required</mat-error>
+                }
+              </mat-form-field>
+
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Submit -->
+        <mat-card class="mt-4">
+          <mat-card-content>
+            @if (error) {
+              <div class="error-banner mb-4">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ error }}</span>
+              </div>
+            }
+
+            <button
+              type="button"
+              mat-flat-button
+              color="primary"
+              class="w-full submit-btn"
+              [disabled]="!isFormValid() || uploading"
+              (click)="submit()"
+            >
+              @if (uploading) {
+                <ng-container>
+                  <mat-spinner diameter="22" class="btn-spinner"></mat-spinner>
+                  Processing...
+                </ng-container>
+              } @else {
+                <ng-container>
+                  <mat-icon>send</mat-icon>
+                  Process Meeting
+                </ng-container>
+              }
+            </button>
+
+            <p class="text-gray-400 text-xs text-center mt-3">
+              AI agents will process your meeting in the background
+            </p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </form>
+</div>

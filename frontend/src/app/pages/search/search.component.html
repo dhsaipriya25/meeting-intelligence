@@ -1,0 +1,166 @@
+<div class="search-page">
+  <!-- Header -->
+  <div class="mb-8 text-center">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Semantic Search</h1>
+    <p class="text-gray-500">Search across all your meeting transcripts, summaries, and action items</p>
+  </div>
+
+  <!-- Search Box -->
+  <div class="search-box-wrapper mb-4">
+    <div class="search-input-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search your meetings...</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="query"
+          (keydown)="onKeyDown($event)"
+          placeholder="e.g. 'action items for deployment' or 'budget risks'"
+          class="search-input"
+        />
+        @if (query) {
+          <button mat-icon-button matSuffix (click)="query = ''; results = []; searched = false;">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <button
+        mat-flat-button
+        color="primary"
+        class="search-button"
+        [disabled]="!query.trim() || loading"
+        (click)="search()"
+      >
+        @if (loading) {
+          <mat-spinner diameter="20"></mat-spinner>
+          Searching...
+        } @else {
+          Search
+        }
+      </button>
+    </div>
+
+    <!-- Type Filter Chips -->
+    <div class="type-chips">
+      <span class="chips-label">Filter by type:</span>
+      @for (type of meetingTypes; track type) {
+        <button
+          class="type-chip-btn"
+          [class.selected]="selectedType === type"
+          (click)="selectType(type)"
+        >
+          {{ type }}
+        </button>
+      }
+      @if (selectedType) {
+        <button class="type-chip-btn clear-type" (click)="selectedType = ''; search()">
+          <mat-icon style="font-size: 14px; width: 14px; height: 14px;">close</mat-icon>
+          Clear filter
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Loading Skeleton -->
+  @if (loading) {
+    <div class="results-list">
+      @for (i of [1,2,3]; track i) {
+        <div class="result-skeleton">
+          <div class="skeleton sk-title"></div>
+          <div class="skeleton sk-text mt-2"></div>
+          <div class="skeleton sk-text-short mt-2"></div>
+          <div class="skeleton sk-chips mt-3"></div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Results -->
+  @else if (searched && !error) {
+    @if (results.length === 0) {
+      <div class="empty-results">
+        <mat-icon>search_off</mat-icon>
+        <h3>No results found</h3>
+        <p>Try different keywords or remove the type filter</p>
+
+        <div class="suggestions-area mt-6">
+          <p class="suggestions-label">Try searching for:</p>
+          <div class="suggestions-chips">
+            @for (s of suggestions; track s) {
+              <button class="suggestion-chip" (click)="useSuggestion(s)">{{ s }}</button>
+            }
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="results-header">
+        <span class="results-count">{{ results.length }} result{{ results.length !== 1 ? 's' : '' }} for "{{ query }}"</span>
+      </div>
+
+      <div class="results-list">
+        @for (result of results; track result.meetingId) {
+          <mat-card class="result-card">
+            <mat-card-content>
+              <div class="result-header">
+                <div class="result-meta">
+                  <span
+                    class="type-badge"
+                    [style.background]="getTypeColor(result.metadata.meetingType) + '20'"
+                    [style.color]="getTypeColor(result.metadata.meetingType)"
+                  >
+                    {{ result.metadata.meetingType }}
+                  </span>
+                  <span class="result-date">
+                    <mat-icon style="font-size: 14px; width: 14px; height: 14px;">calendar_today</mat-icon>
+                    {{ formatDate(result.metadata.createdAt) }}
+                  </span>
+                  <span class="relevance-score">
+                    <mat-icon style="font-size: 14px; width: 14px; height: 14px;">auto_awesome</mat-icon>
+                    {{ (result.score * 100).toFixed(0) }}% match
+                  </span>
+                </div>
+                <button mat-stroked-button color="primary" (click)="navigateToMeeting(result.meetingId)">
+                  <mat-icon>open_in_new</mat-icon>
+                  View Meeting
+                </button>
+              </div>
+
+              <h3 class="result-title">{{ result.metadata.title }}</h3>
+
+              <p class="result-excerpt" [innerHTML]="highlightText(result.excerpt, query)"></p>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
+  }
+
+  <!-- Initial State -->
+  @else if (!searched && !loading) {
+    <div class="initial-state">
+      <div class="search-illustration">
+        <mat-icon>manage_search</mat-icon>
+      </div>
+      <h3>Search across all your meetings</h3>
+      <p>Use natural language to find anything from your meetings</p>
+
+      <div class="suggestions-area mt-6">
+        <p class="suggestions-label">Try these searches:</p>
+        <div class="suggestions-chips">
+          @for (s of suggestions; track s) {
+            <button class="suggestion-chip" (click)="useSuggestion(s)">{{ s }}</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-stroked-button (click)="search()">Retry</button>
+    </div>
+  }
+</div>

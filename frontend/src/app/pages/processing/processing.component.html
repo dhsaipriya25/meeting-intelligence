@@ -1,0 +1,117 @@
+<div class="processing-page">
+
+  <!-- Error State -->
+  @if (error) {
+    <div class="error-card">
+      <div class="error-inner">
+        <div class="error-icon-wrap">
+          <mat-icon>error_outline</mat-icon>
+        </div>
+        <h2>Processing Failed</h2>
+        <p class="error-reason">{{ errorMessage }}</p>
+        <button mat-raised-button color="primary" (click)="goHome()">
+          <mat-icon>arrow_back</mat-icon>
+          Try Again
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Processing State -->
+  @if (!error) {
+    <div class="processing-card">
+
+      <!-- Gradient accent bar -->
+      <div class="accent-bar"></div>
+
+      <div class="card-body">
+
+        <!-- Status Header -->
+        <div class="status-header">
+          <div class="spinner-wrap">
+            @if (status !== 'completed') {
+              <div class="spinner-ring">
+                <mat-spinner diameter="52" color="primary"></mat-spinner>
+              </div>
+            } @else {
+              <div class="complete-circle">
+                <mat-icon class="complete-icon">check</mat-icon>
+              </div>
+            }
+          </div>
+
+          <div class="status-text">
+            <h2 class="status-title">
+              @if (status === 'completed') { Analysis Complete! }
+              @else { Analyzing Your Content }
+            </h2>
+            <p class="agent-label">{{ getAgentLabel(currentAgent) }}</p>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-section">
+          <div class="progress-meta">
+            <span class="progress-steps">Pipeline Progress</span>
+            <span class="progress-pct">{{ progress }}%</span>
+          </div>
+          <mat-progress-bar
+            mode="determinate"
+            [value]="progress"
+            color="primary"
+            class="progress-bar"
+          ></mat-progress-bar>
+        </div>
+
+        <!-- Pipeline Steps -->
+        <div class="pipeline">
+          @for (step of pipelineSteps; track step.key; let last = $last) {
+            <div class="pipeline-step" [class]="'step-' + step.state">
+
+              <div class="step-track">
+                <div class="step-dot">
+                  @if (step.state === 'done') {
+                    <mat-icon class="dot-done">check_circle</mat-icon>
+                  } @else if (step.state === 'active') {
+                    <mat-spinner diameter="20" color="primary"></mat-spinner>
+                  } @else {
+                    <div class="dot-pending"></div>
+                  }
+                </div>
+                @if (!last) {
+                  <div class="step-line" [class.filled]="step.state === 'done'"></div>
+                }
+              </div>
+
+              <div class="step-content" [class.active-content]="step.state === 'active'">
+                <mat-icon class="step-icon">{{ step.icon }}</mat-icon>
+                <span class="step-label">{{ step.label }}</span>
+              </div>
+
+              <div class="step-status">
+                @if (step.state === 'done') {
+                  <span class="badge badge-done">Done</span>
+                } @else if (step.state === 'active') {
+                  <span class="badge badge-active">Running</span>
+                } @else {
+                  <span class="badge badge-queued">Queued</span>
+                }
+              </div>
+
+            </div>
+          }
+        </div>
+
+        <!-- Redirect hint -->
+        @if (status === 'completed') {
+          <div class="redirect-hint">
+            <mat-icon>rocket_launch</mat-icon>
+            <span>Redirecting to your results...</span>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+</div>

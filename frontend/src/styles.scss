@@ -1,0 +1,126 @@
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+* {
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f0f2ff;
+  color: #0f172a;
+}
+
+// ── Material overrides ──────────────────────────────────────────────────────
+
+.mat-mdc-card {
+  border-radius: 20px !important;
+}
+
+.mat-mdc-raised-button.mat-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4) !important;
+  border-radius: 12px !important;
+  transition: all 0.25s ease !important;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.5) !important;
+  }
+
+  &:disabled {
+    background: linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 100%) !important;
+    box-shadow: none !important;
+  }
+}
+
+.mat-mdc-tab-group {
+  --mdc-tab-indicator-active-indicator-color: #6366f1;
+  --mat-tab-header-active-label-text-color: #6366f1;
+  --mat-tab-header-active-focus-label-text-color: #6366f1;
+  --mat-tab-header-active-hover-label-text-color: #6366f1;
+  --mat-tab-header-inactive-label-text-color: #64748b;
+}
+
+.mat-mdc-table {
+  .mat-mdc-header-row {
+    background: #f8fafc;
+
+    .mat-mdc-header-cell {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: none;
+    }
+  }
+
+  .mat-mdc-row {
+    transition: background 0.15s ease;
+
+    &:hover .mat-mdc-cell {
+      background: #f8f8ff;
+    }
+
+    .mat-mdc-cell {
+      padding: 14px 16px;
+      border-bottom-color: #f1f5f9;
+    }
+  }
+}
+
+.mat-mdc-progress-bar {
+  border-radius: 6px !important;
+  height: 10px !important;
+  overflow: hidden;
+  --mdc-linear-progress-active-indicator-color: #6366f1;
+  --mdc-linear-progress-track-color: #e0e7ff;
+}
+
+.mat-mdc-snack-bar-container {
+  border-radius: 12px !important;
+}
+
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-focus-outline-color: #6366f1;
+  --mdc-outlined-text-field-label-text-color: #64748b;
+}
+
+// ── Scrollbar ───────────────────────────────────────────────────────────────
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 10px;
+  &:hover { background: #a5b4fc; }
+}
+
+// ── Global Animations ───────────────────────────────────────────────────────
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.35); }
+  50%       { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

@@ -1,0 +1,284 @@
+<div class="meeting-detail-page">
+
+  @if (loading) {
+    <!-- Skeleton Loader -->
+    <div class="skeleton-container">
+      <div class="skeleton skeleton-header"></div>
+      <div class="skeleton skeleton-toolbar mt-4"></div>
+      <div class="skeleton skeleton-tabs mt-4"></div>
+      <div class="skeleton skeleton-content mt-4"></div>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <h3 class="text-lg font-semibold text-red-700">{{ error }}</h3>
+      <button mat-stroked-button color="primary" (click)="loadMeeting()" class="mt-4">
+        <mat-icon>refresh</mat-icon> Retry
+      </button>
+    </div>
+  } @else if (meeting) {
+
+    <!-- Meeting Header -->
+    <mat-card class="header-card mb-4">
+      <mat-card-content>
+        <div class="meeting-header">
+          <div class="meeting-meta">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="type-chip" [style.background]="getMeetingTypeColor(meeting.meetingType) + '20'" [style.color]="getMeetingTypeColor(meeting.meetingType)">
+                {{ meeting.meetingType }}
+              </span>
+              <app-status-badge [status]="meeting.status"></app-status-badge>
+            </div>
+            <h1 class="meeting-title">{{ meeting.title }}</h1>
+            <div class="meeting-info-row">
+              <span class="info-item">
+                <mat-icon>calendar_today</mat-icon>
+                {{ formatDate(meeting.createdAt) }}
+              </span>
+              <span class="info-item">
+                <mat-icon>person</mat-icon>
+                {{ meeting.createdBy }}
+              </span>
+              @if (meeting.actionItems?.length) {
+                <span class="info-item">
+                  <mat-icon>task_alt</mat-icon>
+                  {{ meeting.actionItems.length }} Action Items
+                </span>
+              }
+              @if (meeting.risks?.length) {
+                <span class="info-item text-orange-600">
+                  <mat-icon>warning</mat-icon>
+                  {{ meeting.risks.length }} Risks
+                </span>
+              }
+            </div>
+          </div>
+
+          <!-- Export Toolbar -->
+          <div class="export-buttons">
+            <button mat-stroked-button (click)="exportMom('docx')" class="export-btn">
+              <mat-icon>description</mat-icon>
+              MOM (DOCX)
+            </button>
+            <button mat-stroked-button (click)="exportMom('pdf')" class="export-btn">
+              <mat-icon>picture_as_pdf</mat-icon>
+              MOM (PDF)
+            </button>
+            <button mat-stroked-button color="primary" (click)="exportActions()" class="export-btn">
+              <mat-icon>table_chart</mat-icon>
+              Actions (Excel)
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Tabs -->
+    <mat-card class="tabs-card">
+      <mat-tab-group animationDuration="200ms" class="meeting-tabs">
+
+        <!-- Summary Tab -->
+        <mat-tab label="Summary">
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">summarize</mat-icon>
+            Summary
+          </ng-template>
+          <div class="tab-content">
+            @if (meeting.summary) {
+              <div class="summary-text">{{ meeting.summary }}</div>
+              <div class="summary-chips mt-4">
+                <span class="summary-chip chip-blue">
+                  <mat-icon>task_alt</mat-icon>
+                  {{ meeting.actionItems?.length || 0 }} Action Items
+                </span>
+                <span class="summary-chip chip-orange">
+                  <mat-icon>warning</mat-icon>
+                  {{ meeting.risks?.length || 0 }} Risks
+                </span>
+              </div>
+            } @else {
+              <div class="empty-tab">
+                <mat-icon>notes</mat-icon>
+                <p>No summary available</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Action Items Tab -->
+        <mat-tab label="Action Items">
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">task_alt</mat-icon>
+            Action Items
+            @if (meeting.actionItems?.length) {
+              <span class="tab-count">{{ meeting.actionItems.length }}</span>
+            }
+          </ng-template>
+          <div class="tab-content no-padding">
+            @if (meeting.actionItems?.length) {
+              <table mat-table [dataSource]="meeting.actionItems" class="action-table">
+
+                <ng-container matColumnDef="task">
+                  <th mat-header-cell *matHeaderCellDef>Task</th>
+                  <td mat-cell *matCellDef="let item">
+                    <span class="task-text">{{ item.task }}</span>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="assignee">
+                  <th mat-header-cell *matHeaderCellDef>Assignee</th>
+                  <td mat-cell *matCellDef="let item">
+                    <div class="assignee-chip">
+                      <mat-icon style="font-size: 14px; width: 14px; height: 14px;">person</mat-icon>
+                      {{ item.assignee || 'Unassigned' }}
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="dueDate">
+                  <th mat-header-cell *matHeaderCellDef>Due Date</th>
+                  <td mat-cell *matCellDef="let item">
+                    <span class="text-gray-600 text-sm">{{ item.dueDate ? formatDate(item.dueDate) : '—' }}</span>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="priority">
+                  <th mat-header-cell *matHeaderCellDef>Priority</th>
+                  <td mat-cell *matCellDef="let item">
+                    <app-status-badge [status]="item.priority" type="priority"></app-status-badge>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let item">
+                    <mat-select
+                      [(ngModel)]="item.status"
+                      class="status-select"
+                      [class]="'status-select-' + item.status"
+                      (selectionChange)="updateActionStatus(item, $event.value)"
+                    >
+                      @for (opt of statusOptions; track opt) {
+                        <mat-option [value]="opt">{{ opt | titlecase }}</mat-option>
+                      }
+                    </mat-select>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="context">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let item">
+                    @if (item.context) {
+                      <mat-icon
+                        [matTooltip]="item.context"
+                        class="context-icon"
+                        matTooltipPosition="left"
+                      >info_outline</mat-icon>
+                    }
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="actionColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: actionColumns;"></tr>
+              </table>
+            } @else {
+              <div class="empty-tab">
+                <mat-icon>task_alt</mat-icon>
+                <p>No action items identified</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Risks Tab -->
+        <mat-tab label="Risks">
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">warning_amber</mat-icon>
+            Risks
+            @if (meeting.risks?.length) {
+              <span class="tab-count tab-count-warn">{{ meeting.risks.length }}</span>
+            }
+          </ng-template>
+          <div class="tab-content">
+            @if (meeting.risks?.length) {
+              <div class="risks-grid">
+                @for (risk of meeting.risks; track risk.id) {
+                  <mat-card class="risk-card">
+                    <mat-card-content>
+                      <div class="risk-header">
+                        <span class="category-chip">{{ risk.category }}</span>
+                        <span class="severity-chip"
+                          [style.background]="getSeverityColor(risk.severity)"
+                          [style.color]="getSeverityTextColor(risk.severity)">
+                          {{ risk.severity | titlecase }}
+                        </span>
+                      </div>
+                      <p class="risk-description">{{ risk.description }}</p>
+                      @if (risk.mitigation) {
+                        <div class="mitigation-box">
+                          <mat-icon class="mitigation-icon">shield</mat-icon>
+                          <span class="mitigation-text">{{ risk.mitigation }}</span>
+                        </div>
+                      }
+                    </mat-card-content>
+                  </mat-card>
+                }
+              </div>
+            } @else {
+              <div class="empty-tab">
+                <mat-icon>verified_user</mat-icon>
+                <p>No risks identified</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- MOM Tab -->
+        <mat-tab label="Minutes of Meeting">
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">description</mat-icon>
+            MOM
+          </ng-template>
+          <div class="tab-content">
+            @if (meeting.momDocument) {
+              <div class="mom-content" [innerHTML]="getSafeMom()"></div>
+            } @else {
+              <div class="empty-tab">
+                <mat-icon>description</mat-icon>
+                <p>Minutes of Meeting not yet generated</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Email Draft Tab -->
+        <mat-tab label="Email Draft">
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">email</mat-icon>
+            Email Draft
+          </ng-template>
+          <div class="tab-content">
+            @if (meeting.emailDraft) {
+              <div class="email-toolbar">
+                <button mat-stroked-button (click)="copyEmailToClipboard()">
+                  <mat-icon>content_copy</mat-icon>
+                  Copy to Clipboard
+                </button>
+              </div>
+              <div class="email-box">
+                <pre class="email-text">{{ meeting.emailDraft }}</pre>
+              </div>
+            } @else {
+              <div class="empty-tab">
+                <mat-icon>email</mat-icon>
+                <p>Email draft not yet generated</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+      </mat-tab-group>
+    </mat-card>
+
+  }
+</div>

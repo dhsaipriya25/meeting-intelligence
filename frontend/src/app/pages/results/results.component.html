@@ -1,0 +1,413 @@
+<div class="results-page">
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="loading-spinner">
+        <mat-spinner diameter="52" color="primary"></mat-spinner>
+      </div>
+      <p class="loading-text">Loading your results...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (!isLoading && error) {
+    <div class="error-state">
+      <div class="error-icon-wrap">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <h2>Could Not Load Results</h2>
+      <p>{{ error }}</p>
+      <button mat-raised-button color="primary" (click)="goHome()">
+        <mat-icon>home</mat-icon> Go Home
+      </button>
+    </div>
+  }
+
+  <!-- Results -->
+  @if (!isLoading && !error && results) {
+
+    <!-- Success Banner -->
+    <div class="success-banner">
+      <div class="banner-inner">
+        <div class="banner-left">
+          <div class="banner-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="banner-text">
+            <h2 class="banner-title">Analysis Complete</h2>
+            <p class="banner-subtitle">
+              Your content has been processed by
+              @if (isMeetingAnalysis) { 6 AI agents }
+              @else { 4 AI agents }
+              — results ready below
+            </p>
+          </div>
+        </div>
+        <button mat-stroked-button class="new-analysis-btn" (click)="goHome()">
+          <mat-icon>add</mat-icon>
+          New Analysis
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Group -->
+    <mat-tab-group [(selectedIndex)]="activeTab" animationDuration="200ms" class="results-tabs">
+
+      <!-- Transcript -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">mic</mat-icon>
+          Transcript
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-icon-wrap">
+                <mat-icon>mic</mat-icon>
+              </div>
+              <h3>Full Transcript</h3>
+            </div>
+          </div>
+
+          <pre class="transcript-box">{{ results.transcript || 'No transcript available.' }}</pre>
+
+          <div class="download-row">
+            <span class="download-label">Export as</span>
+            <button mat-stroked-button class="dl-btn" (click)="download('transcript_txt')">
+              <mat-icon>download</mat-icon> TXT
+            </button>
+            <button mat-stroked-button class="dl-btn" (click)="download('transcript_docx')">
+              <mat-icon>description</mat-icon> DOCX
+            </button>
+            <button mat-stroked-button class="dl-btn" (click)="download('transcript_pdf')">
+              <mat-icon>picture_as_pdf</mat-icon> PDF
+            </button>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Summary -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">summarize</mat-icon>
+          Summary
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-icon-wrap">
+                <mat-icon>summarize</mat-icon>
+              </div>
+              <h3>Meeting Summary</h3>
+            </div>
+          </div>
+
+          <div class="summary-box">{{ results.summary || 'No summary available.' }}</div>
+
+          <div class="download-row">
+            <span class="download-label">Export as</span>
+            <button mat-stroked-button class="dl-btn" (click)="download('summary_txt')">
+              <mat-icon>download</mat-icon> TXT
+            </button>
+            <button mat-stroked-button class="dl-btn" (click)="download('summary_pdf')">
+              <mat-icon>picture_as_pdf</mat-icon> PDF
+            </button>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Meeting Analysis tabs -->
+      @if (isMeetingAnalysis) {
+
+        <!-- Action Items -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">task_alt</mat-icon>
+            Actions
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="section-header">
+              <div class="section-title-group">
+                <div class="section-icon-wrap violet">
+                  <mat-icon>task_alt</mat-icon>
+                </div>
+                <h3>Action Items</h3>
+              </div>
+              <div class="priority-stats">
+                @if (highCount > 0) {
+                  <span class="chip chip-high">{{ highCount }} High</span>
+                }
+                @if (mediumCount > 0) {
+                  <span class="chip chip-medium">{{ mediumCount }} Med</span>
+                }
+                @if (lowCount > 0) {
+                  <span class="chip chip-low">{{ lowCount }} Low</span>
+                }
+              </div>
+            </div>
+
+            @if (results.action_items && results.action_items.length > 0) {
+              <div class="table-wrapper">
+                <table mat-table [dataSource]="results.action_items" class="action-table">
+                  <ng-container matColumnDef="index">
+                    <th mat-header-cell *matHeaderCellDef>#</th>
+                    <td mat-cell *matCellDef="let item; let i = index">{{ i + 1 }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="task">
+                    <th mat-header-cell *matHeaderCellDef>Task</th>
+                    <td mat-cell *matCellDef="let item" class="task-cell">{{ item.task }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="assignee">
+                    <th mat-header-cell *matHeaderCellDef>Assignee</th>
+                    <td mat-cell *matCellDef="let item">{{ item.assignee || '—' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="due_date">
+                    <th mat-header-cell *matHeaderCellDef>Due Date</th>
+                    <td mat-cell *matCellDef="let item">{{ item.due_date || '—' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="priority">
+                    <th mat-header-cell *matHeaderCellDef>Priority</th>
+                    <td mat-cell *matCellDef="let item">
+                      <span class="priority-chip" [class]="getPriorityClass(item.priority)">{{ item.priority }}</span>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="context">
+                    <th mat-header-cell *matHeaderCellDef>Context</th>
+                    <td mat-cell *matCellDef="let item" class="context-cell">{{ item.context }}</td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="actionColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: actionColumns;"></tr>
+                </table>
+              </div>
+            } @else {
+              <div class="empty-state">
+                <mat-icon>task_alt</mat-icon>
+                <p>No action items found in this meeting.</p>
+              </div>
+            }
+
+            <div class="download-row">
+              <span class="download-label">Export as</span>
+              <button mat-stroked-button class="dl-btn" (click)="download('actions_excel')">
+                <mat-icon>table_chart</mat-icon> Excel
+              </button>
+              <button mat-stroked-button class="dl-btn" (click)="download('actions_pdf')">
+                <mat-icon>picture_as_pdf</mat-icon> PDF
+              </button>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Risks -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">warning_amber</mat-icon>
+            Risks
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="section-header">
+              <div class="section-title-group">
+                <div class="section-icon-wrap orange">
+                  <mat-icon>warning_amber</mat-icon>
+                </div>
+                <h3>Risks &amp; Dependencies</h3>
+              </div>
+              @if (results.risks) {
+                <span class="item-count">{{ results.risks.length }} item{{ results.risks.length !== 1 ? 's' : '' }}</span>
+              }
+            </div>
+
+            @if (results.risks && results.risks.length > 0) {
+              <div class="risks-grid">
+                @for (risk of results.risks; track $index) {
+                  <mat-card class="risk-card" [class]="getSeverityClass(risk.severity)">
+                    <mat-card-content>
+                      <div class="risk-header">
+                        <div class="risk-category">
+                          <mat-icon class="category-icon" [class]="getCategoryClass(risk.category)">
+                            {{ getCategoryIcon(risk.category) }}
+                          </mat-icon>
+                          <span class="category-badge" [class]="getCategoryClass(risk.category)">
+                            {{ getCategoryLabel(risk.category) }}
+                          </span>
+                        </div>
+                        <span class="severity-chip" [class]="getSeverityClass(risk.severity)">{{ risk.severity }}</span>
+                      </div>
+                      <p class="risk-description">{{ risk.description }}</p>
+                      @if (risk.mitigation) {
+                        <div class="risk-mitigation">
+                          <mat-icon class="mitigation-icon">shield</mat-icon>
+                          <span>{{ risk.mitigation }}</span>
+                        </div>
+                      }
+                    </mat-card-content>
+                  </mat-card>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <mat-icon>verified_user</mat-icon>
+                <p>No risks or dependencies identified.</p>
+              </div>
+            }
+
+            <div class="download-row">
+              <span class="download-label">Export as</span>
+              <button mat-stroked-button class="dl-btn" (click)="download('risks_excel')">
+                <mat-icon>table_chart</mat-icon> Excel
+              </button>
+              <button mat-stroked-button class="dl-btn" (click)="download('risks_pdf')">
+                <mat-icon>picture_as_pdf</mat-icon> PDF
+              </button>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- MOM -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">description</mat-icon>
+            MOM
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="section-header">
+              <div class="section-title-group">
+                <div class="section-icon-wrap green">
+                  <mat-icon>description</mat-icon>
+                </div>
+                <h3>Minutes of Meeting</h3>
+              </div>
+            </div>
+
+            <div class="document-box">
+              <pre class="document-content">{{ results.mom_document || 'No MOM document available.' }}</pre>
+            </div>
+
+            <div class="download-row">
+              <span class="download-label">Export as</span>
+              <button mat-stroked-button class="dl-btn" (click)="download('mom_docx')">
+                <mat-icon>description</mat-icon> DOCX
+              </button>
+              <button mat-stroked-button class="dl-btn" (click)="download('mom_pdf')">
+                <mat-icon>picture_as_pdf</mat-icon> PDF
+              </button>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Email Draft -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">email</mat-icon>
+            Email
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="section-header">
+              <div class="section-title-group">
+                <div class="section-icon-wrap blue">
+                  <mat-icon>email</mat-icon>
+                </div>
+                <h3>Follow-up Email Draft</h3>
+              </div>
+            </div>
+
+            <div class="email-box">
+              <pre class="email-content">{{ results.email_draft || 'No email draft available.' }}</pre>
+            </div>
+
+            <div class="download-row">
+              <span class="download-label">Actions</span>
+              <button
+                mat-stroked-button
+                class="dl-btn"
+                [class.copied]="copied"
+                (click)="copyToClipboard(results.email_draft)"
+              >
+                <mat-icon>{{ copied ? 'check' : 'content_copy' }}</mat-icon>
+                {{ copied ? 'Copied!' : 'Copy' }}
+              </button>
+              <button mat-stroked-button class="dl-btn" (click)="download('email_txt')">
+                <mat-icon>download</mat-icon> TXT
+              </button>
+            </div>
+          </div>
+        </mat-tab>
+
+      }
+
+      <!-- Content Analysis tabs -->
+      @if (isContentAnalysis) {
+
+        <!-- Detailed Explanation -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">school</mat-icon>
+            Explanation
+          </ng-template>
+          <div class="tab-content">
+            <div class="section-header">
+              <div class="section-title-group">
+                <div class="section-icon-wrap violet">
+                  <mat-icon>school</mat-icon>
+                </div>
+                <h3>Detailed Explanation</h3>
+              </div>
+            </div>
+            <div class="summary-box">{{ results.detailed_explanation || 'No explanation available.' }}</div>
+            <div class="download-row">
+              <span class="download-label">Export as</span>
+              <button mat-stroked-button class="dl-btn" (click)="download('explanation_txt')">
+                <mat-icon>download</mat-icon> TXT
+              </button>
+              <button mat-stroked-button class="dl-btn" (click)="download('explanation_pdf')">
+                <mat-icon>picture_as_pdf</mat-icon> PDF
+              </button>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Steps (only if present) -->
+        @if (results.steps_detail) {
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tab-icon">format_list_numbered</mat-icon>
+              Steps
+            </ng-template>
+            <div class="tab-content">
+              <div class="section-header">
+                <div class="section-title-group">
+                  <div class="section-icon-wrap green">
+                    <mat-icon>format_list_numbered</mat-icon>
+                  </div>
+                  <h3>Step-by-Step Breakdown</h3>
+                </div>
+              </div>
+              <div class="document-box">
+                <pre class="document-content">{{ results.steps_detail }}</pre>
+              </div>
+              <div class="download-row">
+                <span class="download-label">Export as</span>
+                <button mat-stroked-button class="dl-btn" (click)="download('steps_txt')">
+                  <mat-icon>download</mat-icon> TXT
+                </button>
+                <button mat-stroked-button class="dl-btn" (click)="download('steps_pdf')">
+                  <mat-icon>picture_as_pdf</mat-icon> PDF
+                </button>
+              </div>
+            </div>
+          </mat-tab>
+        }
+
+      }
+
+    </mat-tab-group>
+  }
+
+</div>
