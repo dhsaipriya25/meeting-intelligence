@@ -21,61 +21,33 @@ MeetingIQ — AI-Powered Meeting Intelligence Platform
 
   ## Setup
 
-  ### Backend
-  ```bash
-  cd backend
-  python -m venv venv
-  venv\Scripts\activate
-  pip install -r requirements.txt
-  cp .env.example .env        # Fill in your AWS credentials
-  uvicorn main:app --reload --port 8000
+1️⃣ Clone
 
-  Frontend
+git clone https://github.com/dhsaipriya25/meeting-intelligence.git
+cd meeting-intelligence
 
-  cd frontend
-  npm install
-  npm start
 
-  Open http://localhost:4200
+2️⃣ Backend
 
-  4. Click **Commit changes**
+cd backend
+python -m venv venv
+# Windows: venv\Scripts\activate   |   macOS/Linux: source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env     # add your AWS credentials
+uvicorn main:app --reload --port 8000
 
-  ---
 
-  ### Step 7 — Add Topics (makes it discoverable)
+3️⃣ Frontend
 
-  1. On your repo page, click the **⚙️ gear icon** next to
-  "About"
-  2. In the **Topics** field add:
-  aws-bedrock  langgraph  angular  fastapi  multi-agent  rag
-  python  ai
-  3. Click **Save changes**
+cd frontend
+npm install
+npm start
 
-  ---
+Open http://localhost:4200
 
-  ### Step 8 — Restore deleted files on your PC
-
-  After uploading, restore what you deleted so your app still
-  works locally:
-
-  ```bash
-  # Restore backend dependencies
-  cd C:\Projects\meeting-intelligence\backend
-  python -m venv venv
-  venv\Scripts\activate
-  pip install -r requirements.txt
-
-  # Restore your .env (rename .env.backup back to .env)
-
-  # Restore frontend dependencies
-  cd C:\Projects\meeting-intelligence\frontend
-  npm install
-
-  ---
-  Final Result
-
-  Your repo will be live at:
-  https://github.com/YOUR_USERNAME/meeting-intelligence
-
-  Share this link with recruiters. The repo will show the full
-  code, README with tech stack, and all agent/pipeline files.
+🔐 Environment Variables
+Variable	Description
+AWS_ACCESS_KEY_ID	AWS access key
+AWS_SECRET_ACCESS_KEY	AWS secret key
+AWS_REGION	e.g. us-east-1
+S3_BUCKET_NAME	Bucket for uploads.
