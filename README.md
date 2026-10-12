@@ -24,23 +24,30 @@ MeetingIQ — AI-Powered Meeting Intelligence Platform
 1️⃣ Clone
 
 git clone https://github.com/dhsaipriya25/meeting-intelligence.git
+
 cd meeting-intelligence
 
 
 2️⃣ Backend
 
 cd backend
+
 python -m venv venv
+
 # Windows: venv\Scripts\activate   |   macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
+
 cp .env.example .env     # add your AWS credentials
+
 uvicorn main:app --reload --port 8000
 
 
 3️⃣ Frontend
 
 cd frontend
+
 npm install
+
 npm start
 
 Open http://localhost:4200
