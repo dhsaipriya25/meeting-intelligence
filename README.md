@@ -54,7 +54,11 @@ Open http://localhost:4200
 
 🔐 Environment Variables
 Variable	Description
+
 AWS_ACCESS_KEY_ID	AWS access key
+
 AWS_SECRET_ACCESS_KEY	AWS secret key
+
 AWS_REGION	e.g. us-east-1
+
 S3_BUCKET_NAME	Bucket for uploads.
